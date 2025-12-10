@@ -1,0 +1,16 @@
+baseURL = 'https://wireanno.com/'
+languageCode = 'en-us'
+title = 'WireAnno'
+theme = 'PaperMod'
+
+[outputs]
+home = ["HTML", "RSS", "JSON"]
+
+[params]
+author = "ricard2k"
+description = "WireAnno - Wire Protocol Annotation Framework"
+keywords = ["wireanno", "wire protocol", "java", "annotation processing"]
+
+[params.homeInfoParams]
+title = "WireAnno"
+content = "Wire Protocol Annotation Framework for Java"
