@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+}
+
+allprojects {
+    apply plugin: 'java'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    version = '0.0.1'
+    group = 'com.wireanno'
+}
+
+project(':wireanno-api') {
+    dependencies {
+    }
+}
+
+project(':wireanno-processor') {
+    dependencies {
+        implementation project(':wireanno-api')
+    }
+}
+
+project(':wireanno-protocol-bundle') {
+    dependencies {
+        implementation project(':wireanno-api')
+        implementation project(':wireanno-processor')
+    }
+}

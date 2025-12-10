@@ -1,0 +1,5 @@
+rootProject.name = 'wireanno'
+
+include ':wireanno-api'
+include ':wireanno-processor'
+include ':wireanno-protocol-bundle'
