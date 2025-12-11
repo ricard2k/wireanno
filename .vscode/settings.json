@@ -4,6 +4,9 @@
         "wireanno-api/src/main/java",
         "wireanno-api/src/main/resources",
         "wireanno-processor/src/main/java",
-        "wireanno-processor/src/main/resources"
+        "wireanno-processor/src/main/resources",
+        "wireanno-protocol-bundle/src/main/java",
+        "wireanno-protocol-bundle/src/main/resources"
     ],
+    "java.format.settings.url": ".vscode/java-formatter.xml",
 }

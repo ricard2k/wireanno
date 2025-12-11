@@ -5,7 +5,7 @@ import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface FixedAscii {
+public @interface FixedAsciiField {
     int fieldNum();
     int length();                 // fixed byte length
     char pad() default '\0';      // pad char if shorter

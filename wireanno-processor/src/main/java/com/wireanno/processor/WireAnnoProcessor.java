@@ -5,7 +5,6 @@ import com.wireanno.*;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
@@ -15,9 +14,9 @@ import java.util.*;
 
 @SupportedAnnotationTypes({
     "com.wireanno.Message",
-    "com.wireanno.UInt16",
-    "com.wireanno.UInt32",
-    "com.wireanno.FixedAscii"
+    "com.wireanno.UInt16Field",
+    "com.wireanno.UInt32Field",
+    "com.wireanno.FixedAsciiField"
 })
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -97,14 +96,14 @@ public class WireAnnoProcessor extends AbstractProcessor {
             sb.append("  public static byte[] encode(").append(ifaceName).append(" instance) throws Exception {\n");
             sb.append("    int total = 0;\n");
             for (ExecutableElement m : getters) {
-                if (m.getAnnotation(FixedAscii.class) != null) {
-                    FixedAscii fas = m.getAnnotation(FixedAscii.class);
+                if (m.getAnnotation(FixedAsciiField.class) != null) {
+                    FixedAsciiField fas = m.getAnnotation(FixedAsciiField.class);
                     sb.append("    total += ").append(fas.length()).append(";\n");
-                } else if (m.getAnnotation(UInt16.class) != null) {
+                } else if (m.getAnnotation(UInt16Field.class) != null) {
                     sb.append("    total += 2;\n");
-                } else if (m.getAnnotation(UInt32.class) != null) {
+                } else if (m.getAnnotation(UInt32Field.class) != null) {
                     sb.append("    total += 4;\n");
-                } else if (m.getAnnotation(Float32.class) != null) {
+                } else if (m.getAnnotation(Float32Field.class) != null) {
                     sb.append("    total += 4;\n");
                 }
             }
@@ -112,14 +111,14 @@ public class WireAnnoProcessor extends AbstractProcessor {
             // TODO: Endianness per-field (default BIG) — keep simple; you can add ByteOrder later.
             for (ExecutableElement m : getters) {
                 String name = m.getSimpleName().toString();
-                if (m.getAnnotation(UInt16.class) != null) {
+                if (m.getAnnotation(UInt16Field.class) != null) {
                     sb.append("    buf.putShort((short)(instance.").append(name).append("() & 0xFFFF));\n");
-                } else if (m.getAnnotation(UInt32.class) != null) {
+                } else if (m.getAnnotation(UInt32Field.class) != null) {
                     sb.append("    buf.putInt((int)(instance.").append(name).append("() & 0xFFFF_FFFFL));\n");
-                } else if (m.getAnnotation(Float32.class) != null) {
+                } else if (m.getAnnotation(Float32Field.class) != null) {
                     sb.append("    buf.putFloat(instance.").append(name).append("());\n");
                 } else {
-                    FixedAscii fas = m.getAnnotation(FixedAscii.class);
+                    FixedAsciiField fas = m.getAnnotation(FixedAsciiField.class);
                     if (fas != null) {
                         sb.append("    byte[] raw_").append(name).append(" = instance.").append(name)
                           .append("() == null ? new byte[0] : instance.").append(name)
@@ -142,12 +141,12 @@ public class WireAnnoProcessor extends AbstractProcessor {
             sb.append("    ByteBuffer buf = ByteBuffer.wrap(bytes);\n");
             for (ExecutableElement m : getters) {
                 String name = m.getSimpleName().toString();
-                if (m.getAnnotation(UInt16.class) != null) {
+                if (m.getAnnotation(UInt16Field.class) != null) {
                     sb.append("    out.put(\"").append(name).append("\", buf.getShort() & 0xFFFF);\n");
-                } else if (m.getAnnotation(UInt32.class) != null) {
+                } else if (m.getAnnotation(UInt32Field.class) != null) {
                     sb.append("    out.put(\"").append(name).append("\", buf.getInt() & 0xFFFF_FFFFL);\n");
                 } else {
-                    FixedAscii fas = m.getAnnotation(FixedAscii.class);
+                    FixedAsciiField fas = m.getAnnotation(FixedAsciiField.class);
                     if (fas != null) {
                         sb.append("    byte[] d_").append(name).append(" = new byte[").append(fas.length()).append("];\n");
                         sb.append("    buf.get(d_").append(name).append(");\n");
@@ -172,19 +171,19 @@ public class WireAnnoProcessor extends AbstractProcessor {
     }
 
     private boolean hasAnyFieldAnnotation(ExecutableElement m) {
-        return m.getAnnotation(UInt16.class) != null
-            || m.getAnnotation(UInt32.class) != null
-            || m.getAnnotation(FixedAscii.class) != null;
+        return m.getAnnotation(UInt16Field.class) != null
+            || m.getAnnotation(UInt32Field.class) != null
+            || m.getAnnotation(FixedAsciiField.class) != null;
     }
 
     private int fieldNumOf(ExecutableElement m) {
-        UInt16 u16 = m.getAnnotation(UInt16.class);
+        UInt16Field u16 = m.getAnnotation(UInt16Field.class);
         if (u16 != null) return u16.fieldNum();
-        UInt32 u32 = m.getAnnotation(UInt32.class);
+        UInt32Field u32 = m.getAnnotation(UInt32Field.class);
         if (u32 != null) return u32.fieldNum();
-        FixedAscii fas = m.getAnnotation(FixedAscii.class);
+        FixedAsciiField fas = m.getAnnotation(FixedAsciiField.class);
         if (fas != null) return fas.fieldNum();
-        Float32 f32 = m.getAnnotation(Float32.class);
+        Float32Field f32 = m.getAnnotation(Float32Field.class);
         if (f32 != null) return f32.fieldNum();
         return Integer.MAX_VALUE;
     }

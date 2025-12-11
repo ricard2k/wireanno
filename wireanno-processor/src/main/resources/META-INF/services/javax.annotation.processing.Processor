@@ -1,1 +1,1 @@
-io.wireanno.processor.AnnoBinProcessor
+com.wireanno.processor.WireAnnoProcessor
