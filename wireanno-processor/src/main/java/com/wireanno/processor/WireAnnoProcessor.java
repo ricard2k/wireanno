@@ -2,6 +2,8 @@ package com.wireanno.processor;
 
 
 import com.wireanno.*;
+import com.wireanno.processor.types.FixedAsciiTypeProcessor;
+
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
@@ -16,6 +18,7 @@ import java.util.*;
     "com.wireanno.Message",
     "com.wireanno.UInt16Field",
     "com.wireanno.UInt32Field",
+    "com.wireanno.Float32Field",
     "com.wireanno.FixedAsciiField"
 })
 
@@ -54,23 +57,24 @@ public class WireAnnoProcessor extends AbstractProcessor {
     private void generateSerializer(TypeElement iface) throws IOException {
         String pkg = elements.getPackageOf(iface).getQualifiedName().toString();
         String ifaceName = iface.getSimpleName().toString();
-        String serializerName = ifaceName + "Serializer";
+        String serializerName = ifaceName + "WireAnnoSerializer";
+        Endian defaultEndian = iface.getAnnotation(Message.class).endian();
 
         // Collect annotated methods and sort by "fieldNum"
-        List<ExecutableElement> getters = new ArrayList<ExecutableElement>();
+        List<VariableElement> fields = new ArrayList<VariableElement>();
         for (Element e : iface.getEnclosedElements()) {
-            if (e.getKind() == ElementKind.METHOD) {
-                ExecutableElement m = (ExecutableElement) e;
-                if (hasAnyFieldAnnotation(m)) {
-                    getters.add(m);
+            if (e.getKind() == ElementKind.FIELD) {
+                VariableElement f = (VariableElement) e;
+                if (hasAnyFieldAnnotation(f)) {
+                    fields.add(f);
                 }
             }
         }
-        Collections.sort(getters, new Comparator<ExecutableElement>() {
-            public int compare(ExecutableElement a, ExecutableElement b) {
-                int oa = fieldNumOf(a);
-                int ob = fieldNumOf(b);
-                return oa < ob ? -1 : (oa == ob ? 0 : 1);
+        Collections.sort(fields, new Comparator<VariableElement>() {
+            public int compare(VariableElement a, VariableElement b) {
+                int na = fieldNumOf(a);
+                int nb = fieldNumOf(b);
+                return na < nb ? -1 : (na == nb ? 0 : 1);
             }
         });
 
@@ -95,7 +99,7 @@ public class WireAnnoProcessor extends AbstractProcessor {
             // encode method
             sb.append("  public static byte[] encode(").append(ifaceName).append(" instance) throws Exception {\n");
             sb.append("    int total = 0;\n");
-            for (ExecutableElement m : getters) {
+            for (VariableElement m : fields) {
                 if (m.getAnnotation(FixedAsciiField.class) != null) {
                     FixedAsciiField fas = m.getAnnotation(FixedAsciiField.class);
                     sb.append("    total += ").append(fas.length()).append(";\n");
@@ -108,8 +112,7 @@ public class WireAnnoProcessor extends AbstractProcessor {
                 }
             }
             sb.append("    ByteBuffer buf = ByteBuffer.allocate(total);\n");
-            // TODO: Endianness per-field (default BIG) — keep simple; you can add ByteOrder later.
-            for (ExecutableElement m : getters) {
+            for (VariableElement m : fields) {
                 String name = m.getSimpleName().toString();
                 if (m.getAnnotation(UInt16Field.class) != null) {
                     sb.append("    buf.putShort((short)(instance.").append(name).append("() & 0xFFFF));\n");
@@ -139,12 +142,14 @@ public class WireAnnoProcessor extends AbstractProcessor {
             sb.append("  public static Map<String,Object> decode(byte[] bytes) throws Exception {\n");
             sb.append("    Map<String,Object> out = new LinkedHashMap<String,Object>();\n");
             sb.append("    ByteBuffer buf = ByteBuffer.wrap(bytes);\n");
-            for (ExecutableElement m : getters) {
+            for (VariableElement m : fields) {
                 String name = m.getSimpleName().toString();
                 if (m.getAnnotation(UInt16Field.class) != null) {
                     sb.append("    out.put(\"").append(name).append("\", buf.getShort() & 0xFFFF);\n");
                 } else if (m.getAnnotation(UInt32Field.class) != null) {
                     sb.append("    out.put(\"").append(name).append("\", buf.getInt() & 0xFFFF_FFFFL);\n");
+                } else if (m.getAnnotation(Float32Field.class) != null) {
+                    sb.append("    out.put(\"").append(name).append("\", buf.getFloat());\n");
                 } else {
                     FixedAsciiField fas = m.getAnnotation(FixedAsciiField.class);
                     if (fas != null) {
@@ -170,13 +175,14 @@ public class WireAnnoProcessor extends AbstractProcessor {
         }
     }
 
-    private boolean hasAnyFieldAnnotation(ExecutableElement m) {
+    private boolean hasAnyFieldAnnotation(VariableElement m) {
         return m.getAnnotation(UInt16Field.class) != null
             || m.getAnnotation(UInt32Field.class) != null
+            || m.getAnnotation(Float32Field.class) != null
             || m.getAnnotation(FixedAsciiField.class) != null;
     }
 
-    private int fieldNumOf(ExecutableElement m) {
+    private int fieldNumOf(VariableElement m) {
         UInt16Field u16 = m.getAnnotation(UInt16Field.class);
         if (u16 != null) return u16.fieldNum();
         UInt32Field u32 = m.getAnnotation(UInt32Field.class);

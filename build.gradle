@@ -13,6 +13,10 @@ allprojects {
     repositories {
         mavenCentral()
     }
+
+    dependencies {
+        testImplementation 'junit:junit:4.13.2'
+    }
 }
 
 subprojects {
@@ -35,5 +39,13 @@ project(':wireanno-protocol-bundle') {
     dependencies {
         implementation project(':wireanno-api')
         implementation project(':wireanno-processor')
+    }
+}
+
+project(':wireanno-tests') {
+    dependencies {
+        implementation project(':wireanno-api')
+        annotationProcessor project(':wireanno-processor')
+        testImplementation project(':wireanno-api')
     }
 }

@@ -1,0 +1,9 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    implementation project(':wireanno-api')
+    annotationProcessor project(':wireanno-processor')
+    testImplementation 'junit:junit:4.13.2'
+}
